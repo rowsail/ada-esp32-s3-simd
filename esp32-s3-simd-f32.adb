@@ -1,5 +1,6 @@
 pragma Ada_2022;
 
+with ESP32.S3.SIMD.Helpers;
 with Interfaces.C;
 with Interfaces;
 use Interfaces;
@@ -10,13 +11,14 @@ package body ESP32.S3.SIMD.F32 is
 
    use type IEEE_Float_32;
    use Interfaces.C;
+   use ESP32.S3.SIMD.Helpers;
    use System;
    use System.Machine_Code;
 
    procedure Add (A, B : SIMD_F32_Vector; Result : in out SIMD_F32_Vector) is
-      A_Ptr : Address := A (A'First)'Address;
-      B_Ptr : Address := B (B'First)'Address;
-      R_Ptr : Address := Result (Result'First)'Address;
+      A_Ptr : Address := First_Address (A);
+      B_Ptr : Address := First_Address (B);
+      R_Ptr : Address := First_Address (Result);
       Cnt   : size_t := size_t (A'Length);
       Tail  : size_t := 0;
       I     : Natural;
@@ -95,8 +97,8 @@ package body ESP32.S3.SIMD.F32 is
    procedure Add_Scalar
      (A : SIMD_F32_Vector; Scalar : IEEE_Float_32; Result : in out SIMD_F32_Vector)
    is
-      A_Ptr : Address := A (A'First)'Address;
-      R_Ptr : Address := Result (Result'First)'Address;
+      A_Ptr : Address := First_Address (A);
+      R_Ptr : Address := First_Address (Result);
       Cnt   : size_t := size_t (A'Length);
       Tail  : size_t := 0;
       I     : Natural;
@@ -169,9 +171,9 @@ package body ESP32.S3.SIMD.F32 is
    end Add_Scalar;
 
    procedure Sub (A, B : SIMD_F32_Vector; Result : in out SIMD_F32_Vector) is
-      A_Ptr : Address := A (A'First)'Address;
-      B_Ptr : Address := B (B'First)'Address;
-      R_Ptr : Address := Result (Result'First)'Address;
+      A_Ptr : Address := First_Address (A);
+      B_Ptr : Address := First_Address (B);
+      R_Ptr : Address := First_Address (Result);
       Cnt   : size_t := size_t (A'Length);
       Tail  : size_t := size_t (0);
       I     : Natural;
@@ -250,16 +252,19 @@ package body ESP32.S3.SIMD.F32 is
    procedure Mul_Shift
      (A, B : SIMD_F32_Vector; Result : in out SIMD_F32_Vector; Shift : Natural)
    is
-      A_Ptr : Address := A (A'First)'Address;
-      B_Ptr : Address := B (B'First)'Address;
-      R_Ptr : Address := Result (Result'First)'Address;
+      A_Ptr : Address := First_Address (A);
+      B_Ptr : Address := First_Address (B);
+      R_Ptr : Address := First_Address (Result);
       Cnt   : size_t := size_t (A'Length);
       Tail  : size_t := 0;
       I     : Natural;
-      pragma Unreferenced (Shift);
    begin
       if A'Length = 0 then
          return;
+      end if;
+
+      if Shift /= 0 then
+         raise Constraint_Error with "Shift must be 0 for SIMD_F32 Mul_Shift";
       end if;
 
       Asm
@@ -332,8 +337,8 @@ package body ESP32.S3.SIMD.F32 is
    procedure Mul_Scalar
      (A : SIMD_F32_Vector; Scalar : IEEE_Float_32; Result : in out SIMD_F32_Vector)
    is
-      A_Ptr : Address := A (A'First)'Address;
-      R_Ptr : Address := Result (Result'First)'Address;
+      A_Ptr : Address := First_Address (A);
+      R_Ptr : Address := First_Address (Result);
       Cnt   : size_t := size_t (A'Length);
       Tail  : size_t := 0;
       I     : Natural;
@@ -406,8 +411,8 @@ package body ESP32.S3.SIMD.F32 is
    end Mul_Scalar;
 
    procedure Neg (A : SIMD_F32_Vector; Result : in out SIMD_F32_Vector) is
-      A_Ptr    : Address := A (A'First)'Address;
-      R_Ptr    : Address := Result (Result'First)'Address;
+      A_Ptr : Address := First_Address (A);
+      R_Ptr : Address := First_Address (Result);
       Cnt      : size_t := size_t (A'Length);
       Tail     : size_t := 0;
       Mask_Neg : aliased Interfaces.Unsigned_32 := 16#80000000#;
@@ -465,8 +470,8 @@ package body ESP32.S3.SIMD.F32 is
    end Neg;
 
    procedure Abs_Val (A : SIMD_F32_Vector; Result : in out SIMD_F32_Vector) is
-      A_Ptr    : Address := A (A'First)'Address;
-      R_Ptr    : Address := Result (Result'First)'Address;
+      A_Ptr : Address := First_Address (A);
+      R_Ptr : Address := First_Address (Result);
       Cnt      : size_t := size_t (A'Length);
       Tail     : size_t := 0;
       Mask_Abs : aliased Interfaces.Unsigned_32 := 16#7FFFFFFF#;
@@ -524,7 +529,7 @@ package body ESP32.S3.SIMD.F32 is
    end Abs_Val;
 
    function Sum (A : SIMD_F32_Vector) return IEEE_Float_32 is
-      A_Ptr  : Address := A (A'First)'Address;
+      A_Ptr : Address := First_Address (A);
       Cnt    : size_t := size_t (A'Length);
       Tail   : size_t := 0;
       Part   : aliased IEEE_Float_32 := 0.0;
@@ -599,8 +604,8 @@ package body ESP32.S3.SIMD.F32 is
    end Sum;
 
    function Dot_Product (A, B : SIMD_F32_Vector) return IEEE_Float_32 is
-      A_Ptr  : Address := A (A'First)'Address;
-      B_Ptr  : Address := B (B'First)'Address;
+      A_Ptr : Address := First_Address (A);
+      B_Ptr : Address := First_Address (B);
       Cnt    : size_t := size_t (A'Length);
       Tail   : size_t := 0;
       Part   : aliased IEEE_Float_32 := 0.0;
@@ -683,7 +688,7 @@ package body ESP32.S3.SIMD.F32 is
    procedure MAC (A : SIMD_F32_Vector; Accumulator : in out IEEE_Float_32;
                   Multiplier : IEEE_Float_32)
    is
-      A_Ptr : Address := A (A'First)'Address;
+      A_Ptr : Address := First_Address (A);
       Cnt   : size_t := size_t (A'Length);
       Tail  : size_t := 0;
       Acc   : aliased IEEE_Float_32 := Accumulator;
@@ -764,8 +769,8 @@ package body ESP32.S3.SIMD.F32 is
    procedure Ceil
      (A : SIMD_F32_Vector; Result : in out SIMD_F32_Vector; Max_Val : IEEE_Float_32)
    is
-      A_Ptr : Address := A (A'First)'Address;
-      R_Ptr : Address := Result (Result'First)'Address;
+      A_Ptr : Address := First_Address (A);
+      R_Ptr : Address := First_Address (Result);
       Cnt   : size_t := size_t (A'Length);
       Tail  : size_t := 0;
       Max_V : aliased IEEE_Float_32 := Max_Val;
@@ -864,8 +869,8 @@ package body ESP32.S3.SIMD.F32 is
    procedure Floor
      (A : SIMD_F32_Vector; Result : in out SIMD_F32_Vector; Min_Val : IEEE_Float_32)
    is
-      A_Ptr : Address := A (A'First)'Address;
-      R_Ptr : Address := Result (Result'First)'Address;
+      A_Ptr : Address := First_Address (A);
+      R_Ptr : Address := First_Address (Result);
       Cnt   : size_t := size_t (A'Length);
       Tail  : size_t := 0;
       Min_V : aliased IEEE_Float_32 := Min_Val;
@@ -962,9 +967,9 @@ package body ESP32.S3.SIMD.F32 is
    end Floor;
 
    procedure Max (A, B : SIMD_F32_Vector; Result : in out SIMD_F32_Vector) is
-      A_Ptr : Address := A (A'First)'Address;
-      B_Ptr : Address := B (B'First)'Address;
-      R_Ptr : Address := Result (Result'First)'Address;
+      A_Ptr : Address := First_Address (A);
+      B_Ptr : Address := First_Address (B);
+      R_Ptr : Address := First_Address (Result);
       Cnt   : size_t := size_t (A'Length);
       Tail  : size_t := 0;
       I     : Natural;
@@ -1065,9 +1070,9 @@ package body ESP32.S3.SIMD.F32 is
    end Max;
 
    procedure Min (A, B : SIMD_F32_Vector; Result : in out SIMD_F32_Vector) is
-      A_Ptr : Address := A (A'First)'Address;
-      B_Ptr : Address := B (B'First)'Address;
-      R_Ptr : Address := Result (Result'First)'Address;
+      A_Ptr : Address := First_Address (A);
+      B_Ptr : Address := First_Address (B);
+      R_Ptr : Address := First_Address (Result);
       Cnt   : size_t := size_t (A'Length);
       Tail  : size_t := 0;
       I     : Natural;

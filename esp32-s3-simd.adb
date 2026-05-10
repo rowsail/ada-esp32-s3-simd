@@ -200,75 +200,67 @@ package body ESP32.S3.SIMD is
 
    function "-" (A : SIMD_I8_Vector; Scalar : Integer_8) return SIMD_I8_Vector is
       R : SIMD_I8_Vector (A'Range);
-      T : SIMD_I8_Vector (A'Range);
    begin
-      Fill (T, Scalar);
-      Sub (A, T, R);
+      Fill (R, Scalar);
+      Sub (A, R, R);
       return R;
    end "-";
 
    function "-" (A : SIMD_I16_Vector; Scalar : Integer_16) return SIMD_I16_Vector is
       R : SIMD_I16_Vector (A'Range);
-      T : SIMD_I16_Vector (A'Range);
    begin
-      Fill (T, Scalar);
-      Sub (A, T, R);
+      Fill (R, Scalar);
+      Sub (A, R, R);
       return R;
    end "-";
 
    function "-" (A : SIMD_I32_Vector; Scalar : Integer_32) return SIMD_I32_Vector is
       R : SIMD_I32_Vector (A'Range);
-      T : SIMD_I32_Vector (A'Range);
    begin
-      Fill (T, Scalar);
-      Sub (A, T, R);
+      Fill (R, Scalar);
+      Sub (A, R, R);
       return R;
    end "-";
 
    function "-" (A : SIMD_F32_Vector; Scalar : IEEE_Float_32) return SIMD_F32_Vector is
       R : SIMD_F32_Vector (A'Range);
-      Neg_Scalar : IEEE_Float_32;
+      Neg_Scalar : constant IEEE_Float_32 := -Scalar;
    begin
-      Neg_Scalar := -Scalar;
       Add_Scalar (A, Neg_Scalar, R);
       return R;
    end "-";
 
    function "-" (Scalar : Integer_8; A : SIMD_I8_Vector) return SIMD_I8_Vector is
       R : SIMD_I8_Vector (A'Range);
-      T : SIMD_I8_Vector (A'Range);
    begin
-      Fill (T, Scalar);
-      Sub (T, A, R);
+      Fill (R, Scalar);
+      Sub (R, A, R);
       return R;
    end "-";
 
    function "-" (Scalar : Integer_16; A : SIMD_I16_Vector) return SIMD_I16_Vector is
       R : SIMD_I16_Vector (A'Range);
-      T : SIMD_I16_Vector (A'Range);
    begin
-      Fill (T, Scalar);
-      Sub (T, A, R);
+      Fill (R, Scalar);
+      Sub (R, A, R);
       return R;
    end "-";
 
    function "-" (Scalar : Integer_32; A : SIMD_I32_Vector) return SIMD_I32_Vector is
       R : SIMD_I32_Vector (A'Range);
-      T : SIMD_I32_Vector (A'Range);
    begin
-      Fill (T, Scalar);
-      Sub (T, A, R);
+      Fill (R, Scalar);
+      Sub (R, A, R);
       return R;
    end "-";
 
    function "-" (Scalar : IEEE_Float_32; A : SIMD_F32_Vector) return SIMD_F32_Vector is
       R : SIMD_F32_Vector (A'Range);
-      T : SIMD_F32_Vector (A'Range);
    begin
-      for I in T'Range loop
-         T (I) := Scalar;
+    for I in R'Range loop
+      R (I) := Scalar;
       end loop;
-      Sub (T, A, R);
+    Sub (R, A, R);
       return R;
    end "-";
 
@@ -349,17 +341,17 @@ package body ESP32.S3.SIMD is
    end "*";
 
    procedure Mul_Shift (A, B : SIMD_I8_Vector; Result : in out SIMD_I8_Vector;
-                        Shift : Natural)
+                        Shift : Shift_I8)
 
      renames ESP32.S3.SIMD.I8.Mul_Shift;
 
    procedure Mul_Shift (A, B : SIMD_I16_Vector; Result : in out SIMD_I16_Vector;
-                        Shift : Natural)
+                        Shift : Shift_I16)
 
      renames ESP32.S3.SIMD.I16.Mul_Shift;
 
    procedure Mul_Shift (A, B : SIMD_I32_Vector; Result : in out SIMD_I32_Vector;
-                        Shift : Natural)
+                        Shift : Shift_I32)
 
      renames ESP32.S3.SIMD.I32.Mul_Shift;
 
@@ -369,17 +361,17 @@ package body ESP32.S3.SIMD is
      renames ESP32.S3.SIMD.F32.Mul_Shift;
 
    procedure Mul_Scalar (A : SIMD_I8_Vector; Scalar : Integer_8;
-                         Result : in out SIMD_I8_Vector; Shift : Natural)
+                         Result : in out SIMD_I8_Vector; Shift : Shift_I8)
 
      renames ESP32.S3.SIMD.I8.Mul_Scalar;
 
    procedure Mul_Scalar (A : SIMD_I16_Vector; Scalar : Integer_16;
-                         Result : in out SIMD_I16_Vector; Shift : Natural)
+                         Result : in out SIMD_I16_Vector; Shift : Shift_I16)
 
      renames ESP32.S3.SIMD.I16.Mul_Scalar;
 
    procedure Mul_Scalar (A : SIMD_I32_Vector; Scalar : Integer_32;
-                         Result : in out SIMD_I32_Vector; Shift : Natural)
+                         Result : in out SIMD_I32_Vector; Shift : Shift_I32)
 
      renames ESP32.S3.SIMD.I32.Mul_Scalar;
 
@@ -480,12 +472,12 @@ package body ESP32.S3.SIMD is
 
      renames ESP32.S3.SIMD.F32.MAC;
 
-   procedure Relu (A : SIMD_I8_Vector; Multiplier : Integer_32; Shift : Natural;
+  procedure Relu (A : SIMD_I8_Vector; Multiplier : Integer_32; Shift : Shift_I8;
                    Result : in out SIMD_I8_Vector)
 
      renames ESP32.S3.SIMD.I8.Relu;
 
-   procedure Relu (A : SIMD_I16_Vector; Multiplier : Integer_32; Shift : Natural;
+  procedure Relu (A : SIMD_I16_Vector; Multiplier : Integer_32; Shift : Shift_I16;
                    Result : in out SIMD_I16_Vector)
 
      renames ESP32.S3.SIMD.I16.Relu;

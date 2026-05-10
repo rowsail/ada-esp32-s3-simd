@@ -13,12 +13,12 @@ package ESP32.S3.SIMD.I16 is
       with Pre => A'Length = B'Length and then A'Length = Result'Length;
 
    procedure Mul_Shift
-     (A, B : SIMD_I16_Vector; Result : in out SIMD_I16_Vector; Shift : Natural)
+       (A, B : SIMD_I16_Vector; Result : in out SIMD_I16_Vector; Shift : Shift_I16)
       with Pre => A'Length = B'Length and then A'Length = Result'Length;
 
    procedure Mul_Scalar
      (A : SIMD_I16_Vector; Scalar : Integer_16; Result : in out SIMD_I16_Vector;
-      Shift : Natural)
+         Shift : Shift_I16)
       with Pre => A'Length = Result'Length;
 
    procedure Mul_Widen (A, B : SIMD_I16_Vector; Result : in out SIMD_I32_Vector)
@@ -38,7 +38,7 @@ package ESP32.S3.SIMD.I16 is
    procedure MAC (A : SIMD_I16_Vector; Accumulator : in out Integer_32;
                   Multiplier : Integer_16);
 
-   procedure Relu (A : SIMD_I16_Vector; Multiplier : Integer_32; Shift : Natural;
+   procedure Relu (A : SIMD_I16_Vector; Multiplier : Integer_32; Shift : Shift_I16;
                    Result : in out SIMD_I16_Vector)
       with Pre => A'Length = Result'Length;
 

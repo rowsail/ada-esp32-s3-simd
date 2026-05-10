@@ -14,7 +14,8 @@ package ESP32.S3.SIMD.F32 is
 
    procedure Mul_Shift
      (A, B : SIMD_F32_Vector; Result : in out SIMD_F32_Vector; Shift : Natural)
-      with Pre => A'Length = B'Length and then A'Length = Result'Length;
+         with Pre => A'Length = B'Length and then A'Length = Result'Length
+            and then Shift = 0;
 
    procedure Mul_Scalar
      (A : SIMD_F32_Vector; Scalar : IEEE_Float_32; Result : in out SIMD_F32_Vector)

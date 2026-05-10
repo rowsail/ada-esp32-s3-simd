@@ -1,36 +1,20 @@
 pragma Ada_2022;
 
---  Ada bindings for the esp_simd library SIMD operations on the ESP32-S3.
+--  Ada bindings for the ESP32-S3 SIMD kernels used by this project.
 --
---  The ESP32-S3 Xtensa LX7 core includes custom PIE (Processor Instruction
---  Extension) SIMD instructions operating on 128-bit vector registers.  This
---  package directly imports the hand-written assembly kernels from the
---  esp_simd component, providing a safe, type-checked Ada interface.
---
---  ALIGNMENT REQUIREMENT: All array arguments must be 16-byte (128-bit)
---  aligned.  Declaring objects of the array types defined here guarantees
---  this alignment automatically.  Passing slices or overlays of other
---  storage that is not 16-byte aligned will cause a hardware exception.
---
---  SIZE REQUIREMENT: Best SIMD throughput is achieved when the array length
---  is a multiple of 16 elements.  Non-multiple-of-16 tails are handled
---  by a scalar fallback inside the assembly, so any length is valid.
+--  Contracts in this package are intentionally explicit:
+--    * vector objects declared from these types are 16-byte aligned
+--    * any array length is valid; scalar tails handle non-multiples of width
+--    * in-place operation is supported when the input and result overlap
+--    * integer shift arguments are range-checked by subtype
+--    * F32 Mul_Shift requires Shift = 0
 
 with Interfaces;
 use Interfaces;
 
 package ESP32.S3.SIMD is
 
-   --  -----------------------------------------------------------------------
-   --  Element scalar subtypes -- these correspond to the C types used by the
-   --  underlying assembly kernels.
-   --  -----------------------------------------------------------------------
-
-
-   --  -----------------------------------------------------------------------
-   --  16-byte aligned array types.  Objects declared with these types are
-   --  automatically 16-byte aligned, satisfying the SIMD requirement.
-   --  -----------------------------------------------------------------------
+   --  16-byte aligned array types used by the SIMD load/store instructions.
 
    type SIMD_I8_Vector    is array (Natural range <>) of Integer_8
       with Alignment => 16;
@@ -41,11 +25,12 @@ package ESP32.S3.SIMD is
    type SIMD_F32_Vector is array (Natural range <>) of IEEE_Float_32
       with Alignment => 16;
 
-   --  -----------------------------------------------------------------------
-   --  Saturated element-wise addition
-   --    Result(i) := clamp(A(i) + B(i))
+   subtype Shift_I8  is Natural range 0 .. 7;
+   subtype Shift_I16 is Natural range 0 .. 15;
+   subtype Shift_I32 is Natural range 0 .. 31;
+
+   --  Saturated element-wise addition.
    --  Integer variants saturate at the type boundary; float uses IEEE add.
-   --  -----------------------------------------------------------------------
 
    procedure Add (A       : SIMD_I8_Vector;
                   B       : SIMD_I8_Vector;
@@ -67,10 +52,7 @@ package ESP32.S3.SIMD is
                   Result  : in out SIMD_F32_Vector)
       with Pre => A'Length = B'Length and then A'Length = Result'Length;
 
-   --  -----------------------------------------------------------------------
-   --  Add a scalar to every element
-   --    Result(i) := clamp(A(i) + Scalar)
-   --  -----------------------------------------------------------------------
+   --  Add a scalar to every element.
 
    procedure Add_Scalar (A      : SIMD_I8_Vector;
                          Scalar : Integer_8;
@@ -92,10 +74,7 @@ package ESP32.S3.SIMD is
                          Result : in out SIMD_F32_Vector)
       with Pre => A'Length = Result'Length;
 
-   --  -----------------------------------------------------------------------
-   --  Saturated element-wise subtraction
-   --    Result(i) := clamp(A(i) - B(i))
-   --  -----------------------------------------------------------------------
+   --  Saturated element-wise subtraction.
 
    procedure Sub (A       : SIMD_I8_Vector;
                   B       : SIMD_I8_Vector;
@@ -117,13 +96,7 @@ package ESP32.S3.SIMD is
                   Result  : in out SIMD_F32_Vector)
       with Pre => A'Length = B'Length and then A'Length = Result'Length;
 
-   --  -----------------------------------------------------------------------
-   --  Operator overloads for vector expressions
-   --    C := A + B
-   --    C := A - B
-   --    C := -A
-   --  Semantics match Add/Sub/Neg procedures for each element type.
-   --  -----------------------------------------------------------------------
+   --  Operator overloads for vector expressions.
 
    function "+" (A, B : SIMD_I8_Vector) return SIMD_I8_Vector
       with Pre => A'Length = B'Length;
@@ -154,7 +127,7 @@ package ESP32.S3.SIMD is
    function "-" (A : SIMD_I32_Vector) return SIMD_I32_Vector;
    function "-" (A : SIMD_F32_Vector) return SIMD_F32_Vector;
 
-   --  Scalar operators
+   --  Scalar operators.
    function "+" (A : SIMD_I8_Vector; Scalar : Integer_8) return SIMD_I8_Vector;
    function "+" (A : SIMD_I16_Vector; Scalar : Integer_16) return SIMD_I16_Vector;
    function "+" (A : SIMD_I32_Vector; Scalar : Integer_32) return SIMD_I32_Vector;
@@ -175,8 +148,8 @@ package ESP32.S3.SIMD is
    function "-" (Scalar : Integer_32; A : SIMD_I32_Vector) return SIMD_I32_Vector;
    function "-" (Scalar : IEEE_Float_32; A : SIMD_F32_Vector) return SIMD_F32_Vector;
 
-   --  Multiplication operators
-   --  Integer variants use shift=0 semantics of Mul_Shift / Mul_Scalar.
+   --  Multiplication operators.
+   --  Integer variants use shift = 0 semantics of Mul_Shift / Mul_Scalar.
    function "*" (A, B : SIMD_I8_Vector) return SIMD_I8_Vector
       with Pre => A'Length = B'Length;
    function "*" (A, B : SIMD_I16_Vector) return SIMD_I16_Vector
@@ -196,58 +169,53 @@ package ESP32.S3.SIMD is
    function "*" (Scalar : Integer_32; A : SIMD_I32_Vector) return SIMD_I32_Vector;
    function "*" (Scalar : IEEE_Float_32; A : SIMD_F32_Vector) return SIMD_F32_Vector;
 
-   --  -----------------------------------------------------------------------
-   --  Element-wise multiply with logical right-shift (fixed-point scaling)
-   --    Result(i) := (A(i) * B(i)) >> Shift
-   --  For IEEE_Float_32 the Shift argument is ignored and the result is A(i)*B(i).
-   --  -----------------------------------------------------------------------
+   --  Element-wise multiply with logical right-shift (fixed-point scaling).
+   --  For IEEE_Float_32, Shift must be 0 and the result is A(i) * B(i).
 
    procedure Mul_Shift (A      : SIMD_I8_Vector;
                         B      : SIMD_I8_Vector;
                         Result : in out SIMD_I8_Vector;
-                        Shift  : Natural)
+                        Shift  : Shift_I8)
       with Pre => A'Length = B'Length and then A'Length = Result'Length;
 
    procedure Mul_Shift (A      : SIMD_I16_Vector;
                         B      : SIMD_I16_Vector;
                         Result : in out SIMD_I16_Vector;
-                        Shift  : Natural)
+                        Shift  : Shift_I16)
       with Pre => A'Length = B'Length and then A'Length = Result'Length;
 
    procedure Mul_Shift (A      : SIMD_I32_Vector;
                         B      : SIMD_I32_Vector;
                         Result : in out SIMD_I32_Vector;
-                        Shift  : Natural)
+                        Shift  : Shift_I32)
       with Pre => A'Length = B'Length and then A'Length = Result'Length;
 
    procedure Mul_Shift (A      : SIMD_F32_Vector;
                         B      : SIMD_F32_Vector;
                         Result : in out SIMD_F32_Vector;
                         Shift  : Natural)
-      with Pre => A'Length = B'Length and then A'Length = Result'Length;
+         with Pre => A'Length = B'Length and then A'Length = Result'Length
+            and then Shift = 0;
 
-   --  -----------------------------------------------------------------------
-   --  Multiply every element by a scalar then right-shift
-   --    Result(i) := (A(i) * Scalar) >> Shift
+   --  Multiply every element by a scalar then right-shift.
    --  The IEEE_Float_32 variant ignores Shift and computes A(i) * Scalar.
-   --  -----------------------------------------------------------------------
 
    procedure Mul_Scalar (A      : SIMD_I8_Vector;
                          Scalar : Integer_8;
                          Result : in out SIMD_I8_Vector;
-                         Shift  : Natural)
+                         Shift  : Shift_I8)
       with Pre => A'Length = Result'Length;
 
    procedure Mul_Scalar (A      : SIMD_I16_Vector;
                          Scalar : Integer_16;
                          Result : in out SIMD_I16_Vector;
-                         Shift  : Natural)
+                         Shift  : Shift_I16)
       with Pre => A'Length = Result'Length;
 
    procedure Mul_Scalar (A      : SIMD_I32_Vector;
                          Scalar : Integer_32;
                          Result : in out SIMD_I32_Vector;
-                         Shift  : Natural)
+                         Shift  : Shift_I32)
       with Pre => A'Length = Result'Length;
 
    procedure Mul_Scalar (A      : SIMD_F32_Vector;
@@ -369,13 +337,13 @@ package ESP32.S3.SIMD is
 
    procedure Relu (A          : SIMD_I8_Vector;
                    Multiplier : Integer_32;
-                   Shift      : Natural;
+                   Shift      : Shift_I8;
                    Result     : in out SIMD_I8_Vector)
       with Pre => A'Length = Result'Length;
 
    procedure Relu (A          : SIMD_I16_Vector;
                    Multiplier : Integer_32;
-                   Shift      : Natural;
+                   Shift      : Shift_I16;
                    Result     : in out SIMD_I16_Vector)
       with Pre => A'Length = Result'Length;
 

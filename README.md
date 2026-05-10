@@ -423,6 +423,10 @@ idf.py build
 The following results were captured from a real board run of the benchmark
 harness in `source/main.adb`.
 
+The firmware image used for these measurements was built with `-O3`, and the
+benchmark code disables runtime checks in the timing sections to keep the
+measurements representative of the optimized hot path.
+
 - Benchmark shape: 1024 elements, 64 iterations per operation
 - Timing source: `esp_timer_get_time()`
 
@@ -430,92 +434,92 @@ harness in `source/main.adb`.
 === Per-Function Benchmark (1024 elements, 64 iterations) ===
 Operation            SIMD_us  Scalar_us  Speedup
 ─────────────────────────────────────────────────
-Add i8                  178   9447  53.1x
-Add i16                 280   7402  26.4x
-Add i32                 489   3300  6.7x
-Add f32                 1097   4116  3.8x
-Add_Scalar i8           120   4929  41.1x
-Add_Scalar i16          171   3700  21.6x
-Add_Scalar i32          271   2477  9.1x
-Add_Scalar f32          988   4928  4.10x
-Sub i8                  172   9856  57.3x
-Sub i16                 277   7399  26.7x
-Sub i32                 482   3291  6.8x
-Sub f32                 1105   4110  3.7x
-Mul_Shift i8            208   11066  53.2x
-Mul_Shift i16           332   11498  34.6x
-Mul_Shift i32           3279   4929  1.5x
-Mul_Shift f32           1102   4118  3.7x
-Mul_Scalar i8           153   2879  18.8x
-Mul_Scalar i16          231   1650  7.1x
-Mul_Scalar i32          2347   1658  0.7x
-Mul_Scalar f32          992   3289  3.3x
-Mul_Widen i8->i16       303   5338  17.6x
-Mul_Widen i16->i32      540   4529  8.4x
-Neg i8                  171   5756  33.7x
-Neg i16                 273   4939  18.1x
-Neg i32                 1504   2470  1.6x
-Neg f32                 476   2059  4.3x
-Abs_Val i8              195   4936  25.3x
-Abs_Val i16             325   3699  11.4x
-Abs_Val i32             1502   2468  1.6x
-Abs_Val f32             472   2060  4.4x
-Sum i8                  116   2057  17.7x
-Sum i16                 166   2055  12.4x
-Sum i32                 269   1647  6.1x
-Sum f32                 585   3285  5.6x
-Dot_Product i8          142   4929  34.7x
-Dot_Product i16         223   4107  18.4x
-Dot_Product i32         1913   2888  1.5x
-Dot_Product f32         693   3696  5.3x
-MAC i8                  116   2058  17.7x
-MAC i16                 168   2057  12.2x
-MAC i32                 1399   1646  1.2x
-MAC f32                 588   3703  6.3x
-Relu i8                 192   1652  8.6x
-Relu i16                324   1659  5.1x
-Ceil i8                 120   3699  30.8x
-Ceil i16                169   2878  17.0x
-Ceil i32                274   2470  9.0x
-Ceil f32                1098   4108  3.7x
-Floor i8                120   3707  30.9x
-Floor i16               168   2879  17.1x
-Floor i32               271   2470  9.1x
-Floor f32               1097   4117  3.8x
-Max i8                  175   5348  30.6x
-Max i16                 275   4519  16.4x
-Max i32                 492   3290  6.7x
-Max f32                 1203   3299  2.7x
-Min i8                  173   5346  30.9x
-Min i16                 275   4521  16.4x
-Min i32                 482   3290  6.8x
-Min f32                 1206   3299  2.7x
-Compare_GT i8           178   5748  32.3x
-Compare_GT i16          332   4929  14.8x
-Compare_GT i32          586   3701  6.3x
-Compare_LT i8           178   5756  32.3x
-Compare_LT i16          329   4938  15.0x
-Compare_LT i32          585   3701  6.3x
-Compare_EQ i8           188   6979  37.1x
-Compare_EQ i16          336   5748  17.1x
-Compare_EQ i32          581   4520  7.8x
-Bitwise_And i8          179   2887  16.1x
-Bitwise_And i16         326   1654  5.1x
-Bitwise_And i32         582   1658  2.8x
-Bitwise_Or i8           175   2878  16.4x
-Bitwise_Or i16          327   1659  5.1x
-Bitwise_Or i32          584   1650  2.8x
-Bitwise_Xor i8          174   2886  16.6x
-Bitwise_Xor i16         325   1653  5.1x
-Bitwise_Xor i32         582   1657  2.8x
-Bitwise_Not i8          144   2878  19.10x
-Bitwise_Not i16         263   1659  6.3x
-Bitwise_Not i32         471   1651  3.5x
-Fill/Zeros/Ones/Copy    446   5372  12.0x
-Convert i8->i32         470   2478  5.3x
-Convert i16->i32        480   2471  5.1x
+Add i8                  171   6987  40.9x
+Add i16                 278   6578  23.7x
+Add i32                 476   2877  6.0x
+Add f32                 1096   3704  3.4x
+Add_Scalar i8           105   6160  58.7x
+Add_Scalar i16          156   6969  44.7x
+Add_Scalar i32          258   2054  7.10x
+Add_Scalar f32          982   4113  4.2x
+Sub i8                  167   6571  39.3x
+Sub i16                 276   6569  23.8x
+Sub i32                 474   2886  6.1x
+Sub f32                 1093   3696  3.4x
+Mul_Shift i8            203   9071  44.7x
+Mul_Shift i16           323   10431  32.3x
+Mul_Shift i32           3270   4114  1.3x
+Mul_Shift f32           1099   3696  3.4x
+Mul_Scalar i8           139   852  6.1x
+Mul_Scalar i16          215   1658  7.7x
+Mul_Scalar i32          2323   1646  0.7x
+Mul_Scalar f32          982   3284  3.3x
+Mul_Widen i8->i16       301   3706  12.3x
+Mul_Widen i16->i32      531   2877  5.4x
+Neg i8                  157   6568  41.8x
+Neg i16                 265   6569  24.8x
+Neg i32                 1495   2056  1.4x
+Neg f32                 473   2057  4.3x
+Abs_Val i8              186   3286  17.7x
+Abs_Val i16             313   2876  9.2x
+Abs_Val i32             1494   2055  1.4x
+Abs_Val f32             461   2056  4.5x
+Sum i8                  95   1648  17.3x
+Sum i16                 150   1235  8.2x
+Sum i32                 251   1236  4.9x
+Sum f32                 568   3285  5.8x
+Dot_Product i8          131   3297  25.2x
+Dot_Product i16         210   2058  9.8x
+Dot_Product i32         1894   2468  1.3x
+Dot_Product f32         683   3695  5.4x
+MAC i8                  103   1647  15.10x
+MAC i16                 153   1237  8.1x
+MAC i32                 1380   1246  0.9x
+MAC f32                 571   3695  6.5x
+Relu i8                 182   843  4.6x
+Relu i16                318   1657  5.2x
+Ceil i8                 105   2466  23.5x
+Ceil i16                160   2065  12.9x
+Ceil i32                261   2055  7.9x
+Ceil f32                1089   3702  3.4x
+Floor i8                106   2465  23.3x
+Floor i16               162   2055  12.7x
+Floor i32               260   2055  7.9x
+Floor f32               1087   3704  3.4x
+Max i8                  166   3698  22.3x
+Max i16                 273   2885  10.6x
+Max i32                 472   2877  6.1x
+Max f32                 1198   3295  2.8x
+Min i8                  166   3697  22.3x
+Min i16                 270   2885  10.7x
+Min i32                 474   2878  6.1x
+Min f32                 1198   3287  2.7x
+Compare_GT i8           189   4106  21.7x
+Compare_GT i16          325   3287  10.1x
+Compare_GT i32          576   3295  5.7x
+Compare_LT i8           183   4107  22.4x
+Compare_LT i16          326   3295  10.1x
+Compare_LT i32          574   3287  5.7x
+Compare_EQ i8           180   4935  27.4x
+Compare_EQ i16          325   4114  12.7x
+Compare_EQ i32          577   4106  7.1x
+Bitwise_And i8          180   842  4.7x
+Bitwise_And i16         317   1655  5.2x
+Bitwise_And i32         574   1646  2.9x
+Bitwise_Or i8           181   844  4.7x
+Bitwise_Or i16          320   1657  5.2x
+Bitwise_Or i32          575   1646  2.9x
+Bitwise_Xor i8          182   852  4.7x
+Bitwise_Xor i16         322   1657  5.1x
+Bitwise_Xor i32         575   1646  2.9x
+Bitwise_Not i8          144   851  5.9x
+Bitwise_Not i16         255   1657  6.5x
+Bitwise_Not i32         460   1646  3.6x
+Fill/Zeros/Ones/Copy    417   1693  4.1x
+Convert i8->i32         473   2061  4.4x
+Convert i16->i32        474   1654  3.5x
 ─────────────────────────────────────────────────
-OVERALL               43348   322086  7.4x
+OVERALL               42602   259877  6.1x
 ```
 
 These numbers are workload-dependent and should be treated as a point-in-time

@@ -115,6 +115,27 @@ procedure Main is
    BW32 : constant Int32_Array_Access := new SIMD_I32_Vector (0 .. Bench_Length - 1);
    --  `new` allocates heap storage and returns an access value (pointer).
 
+   --  Test-specific heap-allocated vectors (small buffers, 16 elements each).
+   --  These avoid stack allocation for declare blocks and prevent stack overflow.
+   TS8A : constant Int8_Array_Access := new SIMD_I8_Vector (0 .. 15);
+   TS8B : constant Int8_Array_Access := new SIMD_I8_Vector (0 .. 15);
+   TS8R : constant Int8_Array_Access := new SIMD_I8_Vector (0 .. 15);
+
+   TO32A : constant Int32_Array_Access := new SIMD_I32_Vector (0 .. 15);
+   TO32B : constant Int32_Array_Access := new SIMD_I32_Vector (0 .. 15);
+   TO32R : constant Int32_Array_Access := new SIMD_I32_Vector (0 .. 15);
+   TOFA  : constant Float32_Array_Access := new SIMD_F32_Vector (0 .. 15);
+   TOFB  : constant Float32_Array_Access := new SIMD_F32_Vector (0 .. 15);
+   TOFR  : constant Float32_Array_Access := new SIMD_F32_Vector (0 .. 15);
+
+   TAbsI8  : constant Int8_Array_Access := new SIMD_I8_Vector (0 .. 15);
+   TAbsI16 : constant Int16_Array_Access := new SIMD_I16_Vector (0 .. 15);
+   TAbsI32 : constant Int32_Array_Access := new SIMD_I32_Vector (0 .. 15);
+   TAbsF   : constant Float32_Array_Access := new SIMD_F32_Vector (0 .. 15);
+
+   TReluI8  : constant Int8_Array_Access := new SIMD_I8_Vector (0 .. 15);
+   TReluI16 : constant Int16_Array_Access := new SIMD_I16_Vector (0 .. 15);
+
    --  Reuse the shared 1K benchmark buffers for correctness tests too.
    A8  : SIMD_I8_Vector renames BA8.all;
    B8  : SIMD_I8_Vector renames BB8.all;
@@ -2644,14 +2665,11 @@ begin
    --  -----------------------------------------------------------------------
    --  Add saturation: 120 + 20 saturates to 127 for Integer_8
    --  -----------------------------------------------------------------------
-   declare
-      SA : SIMD_I8_Vector (0 .. 15) := (others => 120);
-      SB : SIMD_I8_Vector (0 .. 15) := (others =>  20);
-      SR : SIMD_I8_Vector (0 .. 15) := (others =>   0);
-   begin
-      Add (SA, SB, SR);
-      Check ("Add i8 saturate", Integer_32 (SR (0)), 127);
-   end;
+   TS8A.all := (others => 120);
+   TS8B.all := (others =>  20);
+   TS8R.all := (others =>   0);
+   Add (TS8A.all, TS8B.all, TS8R.all);
+   Check ("Add i8 saturate", Integer_32 (TS8R.all (0)), 127);
 
    --  -----------------------------------------------------------------------
    --  Add_Scalar
@@ -2680,61 +2698,59 @@ begin
    --  -----------------------------------------------------------------------
    --  Operator overloads
    --  -----------------------------------------------------------------------
-   declare
-      OA32 : SIMD_I32_Vector (0 .. 15) := (others => 1000);
-      OB32 : SIMD_I32_Vector (0 .. 15) := (others => 250);
-      OR32 : SIMD_I32_Vector (0 .. 15) := (others => 0);
-      OAF  : SIMD_F32_Vector (0 .. 15) := (others => 2.0);
-      OBF  : SIMD_F32_Vector (0 .. 15) := (others => 0.5);
-      ORF  : SIMD_F32_Vector (0 .. 15) := (others => 0.0);
-   begin
-      OR32 := OA32 + OB32;
-      Check ("Op + vec i32", Integer_32 (OR32 (0)), 1250);
-      ORF := OAF + OBF;
-      Check_F ("Op + vec f32", ORF (0), 2.5);
+   TO32A.all := (others => 1000);
+   TO32B.all := (others => 250);
+   TO32R.all := (others => 0);
+   TOFA.all := (others => 2.0);
+   TOFB.all := (others => 0.5);
+   TOFR.all := (others => 0.0);
 
-      OR32 := OA32 - OB32;
-      Check ("Op - vec i32", Integer_32 (OR32 (0)), 750);
-      ORF := OAF - OBF;
-      Check_F ("Op - vec f32", ORF (0), 1.5);
+   TO32R.all := TO32A.all + TO32B.all;
+   Check ("Op + vec i32", Integer_32 (TO32R.all (0)), 1250);
+   TOFR.all := TOFA.all + TOFB.all;
+   Check_F ("Op + vec f32", TOFR.all (0), 2.5);
 
-      OR32 := -OA32;
-      Check ("Op unary - i32", Integer_32 (OR32 (0)), -1000);
-      ORF := -OAF;
-      Check_F ("Op unary - f32", ORF (0), -2.0);
+   TO32R.all := TO32A.all - TO32B.all;
+   Check ("Op - vec i32", Integer_32 (TO32R.all (0)), 750);
+   TOFR.all := TOFA.all - TOFB.all;
+   Check_F ("Op - vec f32", TOFR.all (0), 1.5);
 
-      OR32 := OA32 + Integer_32 (7);
-      Check ("Op + scalar rhs i32", Integer_32 (OR32 (0)), 1007);
-      OR32 := Integer_32 (7) + OA32;
-      Check ("Op + scalar lhs i32", Integer_32 (OR32 (0)), 1007);
-      ORF := OAF + IEEE_Float_32 (1.5);
-      Check_F ("Op + scalar rhs f32", ORF (0), 3.5);
-      ORF := IEEE_Float_32 (1.5) + OAF;
-      Check_F ("Op + scalar lhs f32", ORF (0), 3.5);
+   TO32R.all := -TO32A.all;
+   Check ("Op unary - i32", Integer_32 (TO32R.all (0)), -1000);
+   TOFR.all := -TOFA.all;
+   Check_F ("Op unary - f32", TOFR.all (0), -2.0);
 
-      OR32 := OA32 - Integer_32 (7);
-      Check ("Op - scalar rhs i32", Integer_32 (OR32 (0)), 993);
-      OR32 := Integer_32 (2000) - OA32;
-      Check ("Op - scalar lhs i32", Integer_32 (OR32 (0)), 1000);
-      ORF := OAF - IEEE_Float_32 (0.5);
-      Check_F ("Op - scalar rhs f32", ORF (0), 1.5);
-      ORF := IEEE_Float_32 (5.0) - OAF;
-      Check_F ("Op - scalar lhs f32", ORF (0), 3.0);
+   TO32R.all := TO32A.all + Integer_32 (7);
+   Check ("Op + scalar rhs i32", Integer_32 (TO32R.all (0)), 1007);
+   TO32R.all := Integer_32 (7) + TO32A.all;
+   Check ("Op + scalar lhs i32", Integer_32 (TO32R.all (0)), 1007);
+   TOFR.all := TOFA.all + IEEE_Float_32 (1.5);
+   Check_F ("Op + scalar rhs f32", TOFR.all (0), 3.5);
+   TOFR.all := IEEE_Float_32 (1.5) + TOFA.all;
+   Check_F ("Op + scalar lhs f32", TOFR.all (0), 3.5);
 
-      OR32 := OA32 * OB32;
-      Check ("Op * vec i32", Integer_32 (OR32 (0)), 250000);
-      ORF := OAF * OBF;
-      Check_F ("Op * vec f32", ORF (0), 1.0);
+   TO32R.all := TO32A.all - Integer_32 (7);
+   Check ("Op - scalar rhs i32", Integer_32 (TO32R.all (0)), 993);
+   TO32R.all := Integer_32 (2000) - TO32A.all;
+   Check ("Op - scalar lhs i32", Integer_32 (TO32R.all (0)), 1000);
+   TOFR.all := TOFA.all - IEEE_Float_32 (0.5);
+   Check_F ("Op - scalar rhs f32", TOFR.all (0), 1.5);
+   TOFR.all := IEEE_Float_32 (5.0) - TOFA.all;
+   Check_F ("Op - scalar lhs f32", TOFR.all (0), 3.0);
 
-      OR32 := OA32 * Integer_32 (3);
-      Check ("Op * scalar rhs i32", Integer_32 (OR32 (0)), 3000);
-      OR32 := Integer_32 (3) * OA32;
-      Check ("Op * scalar lhs i32", Integer_32 (OR32 (0)), 3000);
-      ORF := OAF * IEEE_Float_32 (3.0);
-      Check_F ("Op * scalar rhs f32", ORF (0), 6.0);
-      ORF := IEEE_Float_32 (3.0) * OAF;
-      Check_F ("Op * scalar lhs f32", ORF (0), 6.0);
-   end;
+   TO32R.all := TO32A.all * TO32B.all;
+   Check ("Op * vec i32", Integer_32 (TO32R.all (0)), 250000);
+   TOFR.all := TOFA.all * TOFB.all;
+   Check_F ("Op * vec f32", TOFR.all (0), 1.0);
+
+   TO32R.all := TO32A.all * Integer_32 (3);
+   Check ("Op * scalar rhs i32", Integer_32 (TO32R.all (0)), 3000);
+   TO32R.all := Integer_32 (3) * TO32A.all;
+   Check ("Op * scalar lhs i32", Integer_32 (TO32R.all (0)), 3000);
+   TOFR.all := TOFA.all * IEEE_Float_32 (3.0);
+   Check_F ("Op * scalar rhs f32", TOFR.all (0), 6.0);
+   TOFR.all := IEEE_Float_32 (3.0) * TOFA.all;
+   Check_F ("Op * scalar lhs f32", TOFR.all (0), 6.0);
 
    --  -----------------------------------------------------------------------
    --  Mul_Shift  (A(i)*B(i) >> Shift)  10*3=30 >> 1 = 15
@@ -2784,21 +2800,19 @@ begin
    --  -----------------------------------------------------------------------
    --  Abs_Val  (|-10| = 10)
    --  -----------------------------------------------------------------------
-   declare
-      NA8  : SIMD_I8_Vector    (0 .. 15) := (others => -10);
-      NA16 : SIMD_I16_Vector   (0 .. 15) := (others => -100);
-      NA32 : SIMD_I32_Vector   (0 .. 15) := (others => -1000);
-      NAF  : SIMD_F32_Vector (0 .. 15) := (others => -2.0);
-   begin
-      Abs_Val (NA8,  R8);
-      Check ("Abs_Val i8",    Integer_32 (R8  (0)), 10);
-      Abs_Val (NA16, R16);
-      Check ("Abs_Val i16",   Integer_32 (R16 (0)), 100);
-      Abs_Val (NA32, R32);
-      Check ("Abs_Val i32",   Integer_32 (R32 (0)), 1000);
-      Abs_Val (NAF,  RF);
-      Check_F ("Abs_Val f32", RF (0),           2.0);
-   end;
+   TAbsI8.all  := (others => -10);
+   TAbsI16.all := (others => -100);
+   TAbsI32.all := (others => -1000);
+   TAbsF.all   := (others => -2.0);
+
+   Abs_Val (TAbsI8.all,  R8);
+   Check ("Abs_Val i8",    Integer_32 (R8  (0)), 10);
+   Abs_Val (TAbsI16.all, R16);
+   Check ("Abs_Val i16",   Integer_32 (R16 (0)), 100);
+   Abs_Val (TAbsI32.all, R32);
+   Check ("Abs_Val i32",   Integer_32 (R32 (0)), 1000);
+   Abs_Val (TAbsF.all,  RF);
+   Check_F ("Abs_Val f32", RF (0),           2.0);
 
    --  -----------------------------------------------------------------------
    --  Sum
@@ -2853,15 +2867,13 @@ begin
    Check ("Relu i16", Integer_32 (R16 (0)), 100);
    --  Relu with negative input is scaled by multiplier and shift.
    --  For multiplier=1, shift=0, value remains unchanged.
-   declare
-      NA8  : SIMD_I8_Vector  (0 .. 15) := (others => -5);
-      NA16 : SIMD_I16_Vector (0 .. 15) := (others => -5);
-   begin
-      Relu (NA8,  1, 0, R8);
-      Check ("Relu i8  neg×1>>0",  Integer_32 (R8  (0)), -5);
-      Relu (NA16, 1, 0, R16);
-      Check ("Relu i16 neg×1>>0",  Integer_32 (R16 (0)), -5);
-   end;
+   TReluI8.all  := (others => -5);
+   TReluI16.all := (others => -5);
+
+   Relu (TReluI8.all,  1, 0, R8);
+   Check ("Relu i8  neg×1>>0",  Integer_32 (R8  (0)), -5);
+   Relu (TReluI16.all, 1, 0, R16);
+   Check ("Relu i16 neg×1>>0",  Integer_32 (R16 (0)), -5);
 
    --  -----------------------------------------------------------------------
    --  Ceil  min(A(i), max_val)  10 clamped to 8 → 8

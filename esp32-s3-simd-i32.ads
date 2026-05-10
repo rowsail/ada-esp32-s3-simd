@@ -13,12 +13,12 @@ package ESP32.S3.SIMD.I32 is
       with Pre => A'Length = B'Length and then A'Length = Result'Length;
 
    procedure Mul_Shift
-     (A, B : SIMD_I32_Vector; Result : in out SIMD_I32_Vector; Shift : Natural)
+       (A, B : SIMD_I32_Vector; Result : in out SIMD_I32_Vector; Shift : Shift_I32)
       with Pre => A'Length = B'Length and then A'Length = Result'Length;
 
    procedure Mul_Scalar
      (A : SIMD_I32_Vector; Scalar : Integer_32; Result : in out SIMD_I32_Vector;
-      Shift : Natural)
+         Shift : Shift_I32)
       with Pre => A'Length = Result'Length;
 
    procedure Neg (A : SIMD_I32_Vector; Result : in out SIMD_I32_Vector)
