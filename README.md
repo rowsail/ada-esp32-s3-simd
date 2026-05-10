@@ -418,6 +418,110 @@ If you only want to rebuild the firmware:
 idf.py build
 ```
 
+### Captured Results (ESP32-S3, May 2026)
+
+The following results were captured from a real board run of the benchmark
+harness in `source/main.adb`.
+
+- Benchmark shape: 1024 elements, 64 iterations per operation
+- Timing source: `esp_timer_get_time()`
+
+```text
+=== Per-Function Benchmark (1024 elements, 64 iterations) ===
+Operation            SIMD_us  Scalar_us  Speedup
+─────────────────────────────────────────────────
+Add i8                  178   9447  53.1x
+Add i16                 280   7402  26.4x
+Add i32                 489   3300  6.7x
+Add f32                 1097   4116  3.8x
+Add_Scalar i8           120   4929  41.1x
+Add_Scalar i16          171   3700  21.6x
+Add_Scalar i32          271   2477  9.1x
+Add_Scalar f32          988   4928  4.10x
+Sub i8                  172   9856  57.3x
+Sub i16                 277   7399  26.7x
+Sub i32                 482   3291  6.8x
+Sub f32                 1105   4110  3.7x
+Mul_Shift i8            208   11066  53.2x
+Mul_Shift i16           332   11498  34.6x
+Mul_Shift i32           3279   4929  1.5x
+Mul_Shift f32           1102   4118  3.7x
+Mul_Scalar i8           153   2879  18.8x
+Mul_Scalar i16          231   1650  7.1x
+Mul_Scalar i32          2347   1658  0.7x
+Mul_Scalar f32          992   3289  3.3x
+Mul_Widen i8->i16       303   5338  17.6x
+Mul_Widen i16->i32      540   4529  8.4x
+Neg i8                  171   5756  33.7x
+Neg i16                 273   4939  18.1x
+Neg i32                 1504   2470  1.6x
+Neg f32                 476   2059  4.3x
+Abs_Val i8              195   4936  25.3x
+Abs_Val i16             325   3699  11.4x
+Abs_Val i32             1502   2468  1.6x
+Abs_Val f32             472   2060  4.4x
+Sum i8                  116   2057  17.7x
+Sum i16                 166   2055  12.4x
+Sum i32                 269   1647  6.1x
+Sum f32                 585   3285  5.6x
+Dot_Product i8          142   4929  34.7x
+Dot_Product i16         223   4107  18.4x
+Dot_Product i32         1913   2888  1.5x
+Dot_Product f32         693   3696  5.3x
+MAC i8                  116   2058  17.7x
+MAC i16                 168   2057  12.2x
+MAC i32                 1399   1646  1.2x
+MAC f32                 588   3703  6.3x
+Relu i8                 192   1652  8.6x
+Relu i16                324   1659  5.1x
+Ceil i8                 120   3699  30.8x
+Ceil i16                169   2878  17.0x
+Ceil i32                274   2470  9.0x
+Ceil f32                1098   4108  3.7x
+Floor i8                120   3707  30.9x
+Floor i16               168   2879  17.1x
+Floor i32               271   2470  9.1x
+Floor f32               1097   4117  3.8x
+Max i8                  175   5348  30.6x
+Max i16                 275   4519  16.4x
+Max i32                 492   3290  6.7x
+Max f32                 1203   3299  2.7x
+Min i8                  173   5346  30.9x
+Min i16                 275   4521  16.4x
+Min i32                 482   3290  6.8x
+Min f32                 1206   3299  2.7x
+Compare_GT i8           178   5748  32.3x
+Compare_GT i16          332   4929  14.8x
+Compare_GT i32          586   3701  6.3x
+Compare_LT i8           178   5756  32.3x
+Compare_LT i16          329   4938  15.0x
+Compare_LT i32          585   3701  6.3x
+Compare_EQ i8           188   6979  37.1x
+Compare_EQ i16          336   5748  17.1x
+Compare_EQ i32          581   4520  7.8x
+Bitwise_And i8          179   2887  16.1x
+Bitwise_And i16         326   1654  5.1x
+Bitwise_And i32         582   1658  2.8x
+Bitwise_Or i8           175   2878  16.4x
+Bitwise_Or i16          327   1659  5.1x
+Bitwise_Or i32          584   1650  2.8x
+Bitwise_Xor i8          174   2886  16.6x
+Bitwise_Xor i16         325   1653  5.1x
+Bitwise_Xor i32         582   1657  2.8x
+Bitwise_Not i8          144   2878  19.10x
+Bitwise_Not i16         263   1659  6.3x
+Bitwise_Not i32         471   1651  3.5x
+Fill/Zeros/Ones/Copy    446   5372  12.0x
+Convert i8->i32         470   2478  5.3x
+Convert i16->i32        480   2471  5.1x
+─────────────────────────────────────────────────
+OVERALL               43348   322086  7.4x
+```
+
+These numbers are workload-dependent and should be treated as a point-in-time
+reference rather than a guaranteed performance target.
+
+
 ## Implementation Notes
 
 The public facade is intentionally higher-level than the per-type implementation packages.
